@@ -62,7 +62,21 @@ table { border-collapse: collapse; width: 100%; }
 th, td { border-bottom: 1px solid #e1e7f0; padding: 10px; text-align: left; vertical-align: top; }
 th { background: #f5f8fc; white-space: nowrap; }
 
+.list-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.list-controls label {
+  display: block;
+}
+
 @media (max-width: 600px) {
   .container { padding: 28px 14px; }
   .panel { padding: 18px; }
+  .section-heading { flex-wrap: wrap; }
 }
+
+

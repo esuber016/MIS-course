@@ -5,6 +5,52 @@ const message = document.querySelector("#message");
 const refreshButton = document.querySelector("#refresh-button");
 const statuses = ["待處理", "處理中", "已完成"];
 
+const sortSelect = document.querySelector("#sort-select");
+let currentTickets = [];
+
+// 緊急程度不能直接依文字排序，因此先轉成數字。
+const urgencyRank = {
+  "一般": 1,
+  "急件": 2,
+  "緊急": 3,
+};
+
+function getTicketNumber(ticket) {
+  return Number(ticket.id.replace("T-", ""));
+}
+
+function renderSortedTickets() {
+  // 複製陣列，避免 sort() 改動原始資料的順序。
+  const sortedTickets = [...currentTickets];
+
+  sortedTickets.sort((a, b) => {
+    const idDifference = getTicketNumber(a) - getTicketNumber(b);
+    const urgencyDifference =
+      (urgencyRank[a.urgency] ?? 0) -
+      (urgencyRank[b.urgency] ?? 0);
+
+    switch (sortSelect.value) {
+      case "id-asc":
+        return idDifference;
+
+      case "id-desc":
+        return -idDifference;
+
+      case "urgency-desc":
+        // 同樣緊急時，編號較小的案件優先。
+        return -urgencyDifference || idDifference;
+
+      case "urgency-asc":
+        return urgencyDifference || idDifference;
+
+      default:
+        return idDifference;
+    }
+  });
+
+  renderTickets(sortedTickets);
+}
+
 function showMessage(text, isError = false) {
   message.textContent = text;
   message.classList.toggle("error", isError);
@@ -38,6 +84,7 @@ function renderTickets(tickets) {
     const row = document.createElement("tr");
     addCell(row, ticket.id);
     addCell(row, `${ticket.location}／${ticket.equipment}`);
+    addCell(row, ticket.urgency);
     addCell(row, ticket.contact);
     addCell(row, ticket.description);
     addCell(row, ticket.created_at);
@@ -62,7 +109,8 @@ async function loadTickets() {
   try {
     const response = await fetch("/api/tickets");
     if (!response.ok) throw new Error("無法讀取案件清單");
-    renderTickets(await response.json());
+    currentTickets = await response.json();
+    renderSortedTickets();
   } catch (error) {
     showMessage(error.message, true);
   }
@@ -85,4 +133,5 @@ async function updateStatus(ticketId, status) {
 }
 
 refreshButton.addEventListener("click", loadTickets);
+sortSelect.addEventListener("change", renderSortedTickets);
 loadTickets();
